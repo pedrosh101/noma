@@ -1,4 +1,3 @@
-import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography } from '../../theme';
@@ -25,7 +24,7 @@ export function CategoryChip({ category, selected, onPress }: CategoryChipProps)
       <Ionicons
         name={category.icon as any}
         size={16}
-        color={selected ? colors.white : colors.inkSoft}
+        color={selected ? colors.white : colors.ink}
         style={styles.icon}
       />
       <Text style={[typography.label, selected && styles.labelSelected]}>
@@ -44,12 +43,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: colors.outline,
     marginRight: spacing.xs,
   },
   chipSelected: {
-    backgroundColor: colors.wine,
-    borderColor: colors.wine,
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
   },
   chipPressed: {
     opacity: 0.85,

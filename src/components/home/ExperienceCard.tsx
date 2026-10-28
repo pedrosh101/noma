@@ -19,7 +19,6 @@ export function ExperienceCard({
     <Pressable
       onPress={() => onPress(experience.id)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityRole="button"
       accessibilityLabel={experience.title}
     >
       <View style={styles.imageWrapper}>
@@ -36,7 +35,7 @@ export function ExperienceCard({
           <Ionicons
             name={experience.isFavorite ? 'heart' : 'heart-outline'}
             size={18}
-            color={experience.isFavorite ? colors.wine : colors.white}
+            color={experience.isFavorite ? colors.ink : colors.white}
           />
         </Pressable>
       </View>

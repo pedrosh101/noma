@@ -1,17 +1,13 @@
-
 export const colors = {
-  clr1: '#245444',
-  ink: '#221A16',
-  inkSoft: '#4A3F38',
-  paper: '#F5EFE4',
+  ink: '#3B3D28',
+  inkSoft: '#5B5D45',
+  paper: '#FEF5E0',
   surface: '#FFFFFF',
-  surfaceMuted: '#FBF6EC',
-  line: '#E4DCCB',
-  wine: '#6E1E2E',
-  wineDark: '#4A1420',
-  olive: '#5F6B45',
-  gold: '#B4894F',
-  muted: '#8C8178',
+  surfaceMuted: '#FBF1DC',
+  outline: '#3B3D28',
+  line: '#E7DCC0',
+  gold: '#C2883C',
+  muted: '#8C8778',
   white: '#FFFFFF',
 } as const;
 

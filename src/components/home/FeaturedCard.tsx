@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...typography.label,
-    color: colors.wine,
+    color: colors.ink,
   },
   title: {
     ...typography.h1,
