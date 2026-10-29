@@ -1,17 +1,6 @@
 import { TextStyle } from 'react-native';
 import { colors } from './colors';
 
-/**
- * Duas famílias: Fraunces (serifada, para títulos e momentos editoriais)
- * e Inter (para interface e leitura de conteúdo denso).
- *
- * As fontes precisam ser carregadas antes do primeiro render, por exemplo
- * no app/_layout.tsx raiz:
- *
- *   import { useFonts } from 'expo-font';
- *   import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
- *   import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
- */
 export const fontFamily = {
   display: 'Fraunces_600SemiBold',
   displayMedium: 'Fraunces_500Medium',
@@ -60,7 +49,7 @@ export const typography: Record<string, TypeToken> = {
   },
   caption: {
     fontFamily: fontFamily.body,
-    fontSize: 13,
+    fontSize: 11,
     lineHeight: 17,
     color: colors.muted,
   },

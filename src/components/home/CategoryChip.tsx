@@ -1,6 +1,7 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, spacing, typography } from '../../theme';
+
+import { colors, fontFamily, radius, shadows, spacing } from '../../theme';
 import { Category } from '../../types/experience';
 
 interface CategoryChipProps {
@@ -10,26 +11,17 @@ interface CategoryChipProps {
 }
 
 export function CategoryChip({ category, selected, onPress }: CategoryChipProps) {
+  const contentColor = selected ? colors.paper : colors.ink;
+
   return (
     <Pressable
       onPress={() => onPress(category.id)}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.chipSelected,
-        pressed && styles.chipPressed,
-      ]}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && styles.pressed]}
     >
-      <Ionicons
-        name={category.icon as any}
-        size={16}
-        color={selected ? colors.white : colors.ink}
-        style={styles.icon}
-      />
-      <Text style={[typography.label, selected && styles.labelSelected]}>
-        {category.label}
-      </Text>
+      <MaterialCommunityIcons name={category.icon} size={16} color={contentColor} />
+      <Text style={[styles.label, { color: contentColor }]}>{category.label}</Text>
     </Pressable>
   );
 }
@@ -38,25 +30,19 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    height: 34,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.outline,
     marginRight: spacing.xs,
+    ...shadows.soft,
   },
-  chipSelected: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
-  },
-  chipPressed: {
-    opacity: 0.85,
-  },
-  icon: {
-    marginRight: spacing.xxs,
-  },
-  labelSelected: {
-    color: colors.white,
+  chipSelected: { backgroundColor: colors.ink },
+  pressed: { opacity: 0.85 },
+  label: {
+    marginLeft: 6,
+    fontFamily: fontFamily.bodyMedium,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

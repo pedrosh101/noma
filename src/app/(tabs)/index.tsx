@@ -1,61 +1,132 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ExperienceRow, ExperienceRowSkeleton } from '../../components/discover/ExperienceRow';
 import { CategoryChip } from '../../components/home/CategoryChip';
-import { ExperienceCard } from '../../components/home/ExperienceCard';
+import { ExperienceCard, ExperienceCardSkeleton } from '../../components/home/ExperienceCard';
 import { FeaturedCard } from '../../components/home/FeaturedCard';
+import { ErrorState, Skeleton } from '../../components/ui/States';
+import { useFavorites } from '../../context/FavoritesContext';
 import { categories } from '../../data/categories';
-import { featuredExperience, experiences as mockExperiences } from '../../data/experiences';
-import { colors, radius, spacing, typography } from '../../theme';
-import { Experience, ExperienceCategory } from '../../types/experience';
-
-// TODO: usuário logado — hoje fixo, deve vir de um contexto/sessão quando
-// a autenticação existir.
-const CURRENT_USER_NAME = 'Ana';
+import { currentUser } from '../../data/user';
+import { useAsync } from '../../hooks/use-async';
+import { getHomeFeed } from '../../services/experiences';
+import { colors, fontFamily, radius, shadows, spacing, typography } from '../../theme';
+import { ExperienceCategory } from '../../types/experience';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [selectedCategory, setSelectedCategory] = useState<ExperienceCategory | null>(null);
-  const [experiences, setExperiences] = useState<Experience[]>(mockExperiences);
 
-  const filteredExperiences = useMemo(() => {
-    if (!selectedCategory) return experiences;
-    return experiences.filter((item) => item.category === selectedCategory);
-  }, [experiences, selectedCategory]);
+  const { status, data, refetch } = useAsync(
+    () => getHomeFeed({ category: selectedCategory, city: currentUser.city }),
+    `home:${selectedCategory ?? 'all'}`
+  );
 
   function handleSelectCategory(id: ExperienceCategory) {
     setSelectedCategory((current) => (current === id ? null : id));
-  }
-
-  function handleToggleFavorite(id: string) {
-    setExperiences((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
-      )
-    );
   }
 
   function handleOpenExperience(id: string) {
     router.push(`/experience/${id}` as never);
   }
 
-  function handleOpenSearch() {
-    router.push('/search' as never);
+  function handleOpenDiscover() {
+    router.navigate('/descubra' as never);
   }
 
-  function handleOpenMenu() {
-    router.push('/menu' as never);
+  const refetching = status === 'loading' && data !== undefined;
+
+  function renderContent() {
+    if (status === 'error' && !data) {
+      return (
+        <View style={styles.section}>
+          <ErrorState what="as experiências" onRetry={refetch} />
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.section}>
+          {data ? (
+            <FeaturedCard experience={data.featured} onPress={handleOpenExperience} />
+          ) : (
+            <Skeleton height={260} borderRadius={radius.lg} />
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[typography.label, styles.sectionTitle]}>Em destaque essa semana</Text>
+            <Pressable onPress={handleOpenDiscover} hitSlop={8} accessibilityRole="button">
+              <Text style={[typography.label, styles.sectionLink]}>Ver tudo</Text>
+            </Pressable>
+          </View>
+
+          {!data ? (
+            <ScrollView
+              horizontal
+              scrollEnabled={false}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardList}
+            >
+              {[0, 1, 2].map((i) => (
+                <ExperienceCardSkeleton key={i} />
+              ))}
+            </ScrollView>
+          ) : data.highlights.length === 0 ? (
+            <Text style={[typography.body, styles.emptyState]}>
+              Nenhuma experiência nessa categoria por aqui ainda.
+            </Text>
+          ) : (
+            <FlatList
+              data={data.highlights}
+              horizontal
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardList}
+              style={refetching && styles.refetching}
+              renderItem={({ item }) => (
+                <ExperienceCard
+                  experience={item}
+                  isFavorite={isFavorite(item.id)}
+                  onPress={handleOpenExperience}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
+            />
+          )}
+        </View>
+
+        <View style={[styles.section, styles.pertoVoce]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[typography.label, styles.sectionTitle]}>Perto de você</Text>
+            <Pressable onPress={handleOpenDiscover} hitSlop={8} accessibilityRole="button">
+              <Text style={[typography.label, styles.sectionLink]}>Ver tudo</Text>
+            </Pressable>
+          </View>
+
+          <View style={[styles.list, refetching && styles.refetching]}>
+            {data
+              ? data.nearby.map((item) => (
+                  <ExperienceRow
+                    key={item.id}
+                    experience={item}
+                    isFavorite={isFavorite(item.id)}
+                    onPress={handleOpenExperience}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ))
+              : [0, 1].map((i) => <ExperienceRowSkeleton key={i} />)}
+          </View>
+        </View>
+      </>
+    );
   }
 
   return (
@@ -63,7 +134,7 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.topBar}>
           <Pressable
-            onPress={handleOpenMenu}
+            onPress={() => router.push('/menu' as never)}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Abrir menu"
@@ -89,17 +160,24 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.header}>
-          <Text style={typography.h2}>Bom dia, {CURRENT_USER_NAME}.</Text>
+          <Text style={typography.h2}>Bom dia, {currentUser.firstName}.</Text>
 
           <View style={styles.locationRow}>
             <Ionicons name="location-outline" size={15} color={colors.inkSoft} />
-            <Text style={[typography.caption, styles.locationText]}>Diamantina - MG</Text>
+            <Text style={[typography.caption, styles.locationText]}>{currentUser.city.replace(', ', ' - ')}</Text>
           </View>
         </View>
 
-        <Pressable onPress={handleOpenSearch} style={styles.searchBar}>
+        <Pressable
+          onPress={handleOpenDiscover}
+          accessibilityRole="search"
+          accessibilityLabel="Buscar experiências"
+          style={({ pressed }) => [styles.searchBar, pressed && styles.pressed]}
+        >
           <Ionicons name="search-outline" size={18} color={colors.muted} />
-          <Text style={styles.searchPlaceholder}>Buscar degustações, jantares, workshops...</Text>
+          <Text style={styles.searchPlaceholder} numberOfLines={1}>
+            Buscar degustações, jantares, workshops...
+          </Text>
         </Pressable>
 
         <FlatList
@@ -117,67 +195,15 @@ export default function HomeScreen() {
           )}
         />
 
-        <View style={styles.section}>
-          <FeaturedCard experience={featuredExperience} onPress={handleOpenExperience} />
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[typography.label, styles.sectionTitle]}>Em destaque essa semana</Text>
-            <Pressable onPress={handleOpenSearch} hitSlop={8}>
-              <Text style={[typography.label, styles.sectionLink]}>Ver tudo</Text>
-            </Pressable>
-          </View>
-
-          <FlatList
-            data={filteredExperiences}
-            horizontal
-            keyExtractor={(item) => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardList}
-            ListEmptyComponent={
-              <Text style={[typography.body, styles.emptyState]}>
-                Nenhuma experiência encontrada nessa categoria por aqui ainda.
-              </Text>
-            }
-            renderItem={({ item }) => (
-              <ExperienceCard
-                experience={item}
-                onPress={handleOpenExperience}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
-          />
-        </View>
-
-        <View style={[styles.section, styles.lastSection]}>
-          <View style={styles.sectionHeader}>
-            <Text style={[typography.label, styles.sectionTitle]}>Perto de você</Text>
-          </View>
-
-          {experiences.slice(3).map((item) => (
-            <View key={item.id} style={styles.listRow}>
-              <ExperienceCard
-                experience={item}
-                onPress={handleOpenExperience}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            </View>
-          ))}
-        </View>
+        {renderContent()}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.paper,
-  },
-  scrollContent: {
-    paddingBottom: spacing.xxxl,
-  },
+  container: { flex: 1, backgroundColor: colors.paper },
+  scrollContent: { paddingBottom: spacing.xxxl },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -185,10 +211,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  logo: {
-    height: 28,
-    width: 100,
-  },
+  logo: { height: 28, width: 100 },
   avatarButton: {
     width: 38,
     height: 38,
@@ -204,64 +227,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginTop: spacing.lg,
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationText: {
-    marginLeft: 4,
-  },
+  locationRow: { flexDirection: 'row', alignItems: 'center' },
+  locationText: { marginLeft: 4 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 44,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.outline,
+    borderRadius: radius.field,
+    ...shadows.soft,
   },
   searchPlaceholder: {
-    ...typography.body,
-    color: colors.muted,
+    flex: 1,
     marginLeft: spacing.xs,
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    color: colors.muted,
   },
+  pressed: { opacity: 0.85 },
   categoryList: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+    paddingBottom: spacing.xxs,
   },
-  section: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  lastSection: {
-    marginTop: spacing.xl,
-  },
+  section: { marginTop: spacing.xl, paddingHorizontal: spacing.lg },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
-  sectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+  sectionTitle: { textTransform: 'uppercase', letterSpacing: 0.5 },
   sectionLink: {
     color: colors.ink,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textDecorationLine: 'underline',
   },
-  cardList: {
-    paddingRight: spacing.lg,
-  },
-  emptyState: {
-    paddingVertical: spacing.lg,
-  },
-  listRow: {
-    marginBottom: spacing.md,
-  },
+  cardList: { paddingRight: spacing.lg },
+  emptyState: { paddingVertical: spacing.lg },
+  list: { gap: spacing.sm },
+  refetching: { opacity: 0.55 },
+  pertoVoce: {marginTop: 40}
 });

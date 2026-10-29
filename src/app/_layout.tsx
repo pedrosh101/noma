@@ -6,6 +6,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { FavoritesProvider } from '../context/FavoritesContext';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -29,7 +31,12 @@ export default function RootLayout() {
   }
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <FavoritesProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* O menu abre pela esquerda, de onde vem o ícone de hambúrguer. */}
+          <Stack.Screen name="menu" options={{ animation: 'slide_from_left' }} />
+        </Stack>
+      </FavoritesProvider>
     </ThemeProvider>
   );
 }

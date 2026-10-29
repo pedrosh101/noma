@@ -1,10 +1,5 @@
-/**
- * Modelo de domínio de uma experiência gastronômica.
- *
- * Mantido independente da origem dos dados (mock hoje, API futuramente) para
- * que telas e componentes nunca dependam do formato de uma fonte específica —
- * apenas a camada de dados (src/data hoje, src/services no futuro) muda.
- */
+import type { CategoryIconName } from './ui';
+
 export type ExperienceCategory =
   | 'vinho'
   | 'cafe'
@@ -28,11 +23,30 @@ export interface Experience {
     name: string;
     avatarUrl: string;
   };
-  isFavorite?: boolean;
 }
 
 export interface Category {
   id: ExperienceCategory;
   label: string;
-  icon: string; // nome do ícone (Ionicons)
+  icon: CategoryIconName; // MaterialCommunityIcons — mesmos glifos do Figma
 }
+export interface ExperienceGuestReview {
+  id: string;
+  author: string;
+  avatarUrl: string;
+  rating: number;
+  comment: string;
+  date: string; // ISO date
+}
+
+/** Campos que só existem na página da experiência (a lista não precisa deles). */
+export interface ExperienceExtras {
+  description: string;
+  included: string[];
+  maxGuests: number;
+  schedule: string;
+  meetingPoint: string;
+  guestReviews: ExperienceGuestReview[];
+}
+
+export interface ExperienceDetail extends Experience, ExperienceExtras {}
